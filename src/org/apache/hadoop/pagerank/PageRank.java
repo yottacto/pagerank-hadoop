@@ -70,15 +70,19 @@ public class PageRank {
 
     public static void main(String[] args) throws Exception {
         Map<String, String> path = init(args);
-        // long n = Count.run(path);
-        long n = 4;
+        long n = Count.run(path);
+        // long n = 284303; // for small data
+        // long n = 870346; // for big   data
+        System.out.println("=====================================================");
         System.out.println("n = " + n);
+        System.out.println("=====================================================");
         Init.run(path, n);
-        int iteration = 30;
+        int iteration = 2;
+        String output = path.get("output");
         for (int i = 0; i < iteration; i++) {
-			PageRank.run(path);
-			path.replace("input", path.get("output"));
-			path.replace("output", path.get("output") + (i + 1));
+            PageRank.run(path);
+            path.replace("input", path.get("output"));
+            path.replace("output", output + (i + 1));
         }
     }
 
@@ -129,6 +133,7 @@ public class PageRank {
         path.put("input", hdfs + "/pagerank/input");
         path.put("tmp_output", hdfs + "/pagerank/output/tmp");
         path.put("output", hdfs + "/pagerank/output");
+        path.put("result", hdfs + "/pagerank/result");
         return path;
     }
 }

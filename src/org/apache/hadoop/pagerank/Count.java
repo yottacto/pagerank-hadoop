@@ -26,6 +26,7 @@ public class Count {
             if (str.countTokens() == 0) return;
             while (str.hasMoreTokens()) {
                 String linkid = str.nextToken();
+                if (linkid.equals("0")) continue;
                 context.write(new Text(linkid), new Text(""));
             }
         }

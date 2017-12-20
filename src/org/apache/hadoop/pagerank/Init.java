@@ -24,8 +24,11 @@ public class Init {
 
             StringTokenizer str = new StringTokenizer(value.toString());
             if (str.countTokens() == 0) return;
+            
             String id = str.nextToken();
             String to = str.nextToken();
+            if (!to.equals("0")) context.write(new Text(to), new Text("0"));
+            if (to.equals("0")  || id.equals("0")) return;
             context.write(new Text(id), new Text(to));
         }
     }
@@ -49,7 +52,9 @@ public class Init {
             String str = "";
             double pr = 1. / count;
             for (Text val : values) {
-                str += " " + val.toString();
+                String tmp = val.toString();
+                if (tmp.equals("0")) continue;
+                str += " " + tmp;
             }
 
             String result = pr + str;
