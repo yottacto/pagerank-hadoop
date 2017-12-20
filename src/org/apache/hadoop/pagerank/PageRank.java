@@ -77,13 +77,19 @@ public class PageRank {
         System.out.println("n = " + n);
         System.out.println("=====================================================");
         Init.run(path, n);
-        int iteration = 2;
+        int iteration = 1;
         String output = path.get("output");
         for (int i = 0; i < iteration; i++) {
+            path.replace("output", output + i);
             PageRank.run(path);
             path.replace("input", path.get("output"));
-            path.replace("output", output + (i + 1));
         }
+        
+        if (iteration == 0)
+        	path.replace("output", path.get("input"));
+        else
+        	path.replace("output", output + (iteration - 1));
+        Sort.run(path);
     }
 
     public static void run(Map<String, String> path) throws Exception {

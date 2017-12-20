@@ -2,27 +2,23 @@ package org.apache.hadoop.pagerank;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.util.GenericOptionsParser;
 
 public class Sort {
 
-    private static int count = 4;
-    private static double damping = 0.85;
-
     public static class SortMapper
-            extends Mapper<Object, Text, Text, Text> {
+            extends Mapper<Object, Text, DoubleWritable, Text> {
 
         public void map(Object key, Text value, Context context)
                 throws IOException, InterruptedException {
@@ -31,40 +27,21 @@ public class Sort {
             if (str.countTokens() == 0)
                 return;
             String id = str.nextToken();
-            double pr = Double.parseDouble(str.nextToken());
-            int count = str.countTokens();
-            if (count == 0)
-                count = 1;
-            double average_pr = pr / count;
-            String linkids = "$";
-            while (str.hasMoreTokens()) {
-                String linkid = str.nextToken();
-                context.write(new Text(linkid), new Text("#" + average_pr));
-                linkids += " " + linkid;
-            }
-            context.write(new Text(id), new Text(linkids));
+            DoubleWritable pr = new DoubleWritable(Double.parseDouble(str.nextToken()));
+            context.write(pr, new Text(id));
         }
     }
 
     public static class SortReducer
-            extends Reducer<Text, Text, Text, Text> {
+            extends Reducer<DoubleWritable, Text, DoubleWritable, Text> {
 
-        public void reduce(Text key, Iterable<Text> values, Context context)
+        public void reduce(DoubleWritable key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
 
-            String str = "";
-            double pr = 0;
             for (Text val : values) {
-                if (val.toString().substring(0, 1).equals("#")) {
-                    pr += Double.parseDouble(val.toString().substring(1));
-                } else if(val.toString().substring(0, 1).equals("$")) {
-                    str += val.toString().substring(1);
-                }
+                String str = val.toString();
+                context.write(key, new Text(str));
             }
-
-            pr = damping * pr + (1 - damping) * 1. / count;
-            String result = pr + str;
-            context.write(key, new Text(result));
         }
     }
 
@@ -88,8 +65,10 @@ public class Sort {
         // job.setCombinerClass(SortReducer.class);
         job.setReducerClass(SortReducer.class);
 
-        job.setOutputKeyClass(Text.class);
+        job.setOutputKeyClass(DoubleWritable.class);
         job.setOutputValueClass(Text.class);
+        
+        job.setSortComparatorClass(SortDoubleComparator.class);
 
         FileInputFormat.addInputPath(job, new Path(path.get("output")));
         FileOutputFormat.setOutputPath(job, new Path(path.get("result")));
